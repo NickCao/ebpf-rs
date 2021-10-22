@@ -1,7 +1,7 @@
 use crate::binding::*;
 use core::fmt;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Class {
     LD,
     LDX,
@@ -13,7 +13,7 @@ pub enum Class {
     ALU64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Size {
     W,
     H,
@@ -21,7 +21,7 @@ pub enum Size {
     DW,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Mode {
     IMM,
     ABS,
@@ -32,7 +32,7 @@ pub enum Mode {
     XADD,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Op {
     ADD,
     SUB,
@@ -64,13 +64,13 @@ pub enum Op {
     JSLE,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Src {
     K,
     X,
 }
 
-impl fmt::Display for Src {
+impl fmt::Debug for Src {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -83,22 +83,34 @@ impl fmt::Display for Src {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Inst {
-    class: Class,
-    size: Size,
-    mode: Mode,
+    class: Option<Class>,
+    size: Option<Size>,
+    mode: Option<Mode>,
     op: Option<Op>,
     src: Option<Src>,
+}
+
+impl Default for Inst {
+    fn default() -> Self {
+        Self {
+            class: None,
+            size: None,
+            mode: None,
+            op: None,
+            src: None,
+        }
+    }
 }
 
 impl Inst {
     pub fn decode(inst: u64) -> Self {
         let cls = class(inst).unwrap();
         Self {
-            class: cls,
-            size: size(inst).unwrap(),
-            mode: mode(inst).unwrap(),
+            class: Some(cls),
+            size: size(inst, cls),
+            mode: mode(inst, cls),
             op: op(inst, cls),
             src: src(inst, cls),
         }
@@ -119,25 +131,31 @@ pub fn class(inst: u64) -> Option<Class> {
     }
 }
 
-pub fn size(inst: u64) -> Option<Size> {
-    match (inst & 0x18) as u32 {
-        bpf::BPF_W => Some(Size::W),
-        bpf::BPF_H => Some(Size::H),
-        bpf::BPF_B => Some(Size::B),
-        bpf::BPF_DW => Some(Size::DW),
+pub fn size(inst: u64, cls: Class) -> Option<Size> {
+    match cls {
+        Class::LD | Class::LDX | Class::ST | Class::STX => match (inst & 0x18) as u32 {
+            bpf::BPF_W => Some(Size::W),
+            bpf::BPF_H => Some(Size::H),
+            bpf::BPF_B => Some(Size::B),
+            bpf::BPF_DW => Some(Size::DW),
+            _ => None,
+        },
         _ => None,
     }
 }
 
-pub fn mode(inst: u64) -> Option<Mode> {
-    match (inst & 0xe0) as u32 {
-        bpf::BPF_IMM => Some(Mode::IMM),
-        bpf::BPF_ABS => Some(Mode::ABS),
-        bpf::BPF_IND => Some(Mode::IND),
-        bpf::BPF_MEM => Some(Mode::MEM),
-        bpf::BPF_LEN => Some(Mode::LEN),
-        bpf::BPF_MSH => Some(Mode::MSH),
-        bpf::BPF_XADD => Some(Mode::XADD),
+pub fn mode(inst: u64, cls: Class) -> Option<Mode> {
+    match cls {
+        Class::LD | Class::LDX | Class::ST | Class::STX => match (inst & 0xe0) as u32 {
+            bpf::BPF_IMM => Some(Mode::IMM),
+            bpf::BPF_ABS => Some(Mode::ABS),
+            bpf::BPF_IND => Some(Mode::IND),
+            bpf::BPF_MEM => Some(Mode::MEM),
+            bpf::BPF_LEN => Some(Mode::LEN),
+            bpf::BPF_MSH => Some(Mode::MSH),
+            bpf::BPF_XADD => Some(Mode::XADD),
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -184,7 +202,7 @@ pub fn op(inst: u64, cls: Class) -> Option<Op> {
 
 pub fn src(inst: u64, cls: Class) -> Option<Src> {
     match cls {
-        Class::ALU | Class::JMP => match (inst & 0x08) as u32 {
+        Class::ALU | Class::ALU64 | Class::JMP | Class::JMP32 => match (inst & 0x08) as u32 {
             bpf::BPF_K => Some(Src::K),
             bpf::BPF_X => Some(Src::X),
             _ => None,
@@ -196,16 +214,81 @@ pub fn src(inst: u64, cls: Class) -> Option<Src> {
 #[cfg(test)]
 #[test]
 fn inst() {
-    println!(
-        "{:?}",
-        Inst::decode((bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU) as u64)
-    );
-    println!(
-        "{:?}",
-        Inst::decode((bpf::BPF_XOR | bpf::BPF_K | bpf::BPF_ALU) as u64)
-    );
-    println!("{:?}", Inst::decode(0x00000000000001bf));
-    println!("{:?}", Inst::decode(0x00000010000000dc));
-    println!("{:?}", Inst::decode(0x0000000000000287));
-    println!("{:?}", Inst::decode(0x0000000000000095));
+    let insts = [
+        (
+            bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU,
+            Inst {
+                class: Some(Class::ALU),
+                op: Some(Op::ADD),
+                src: Some(Src::X),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_XOR | bpf::BPF_K | bpf::BPF_ALU,
+            Inst {
+                class: Some(Class::ALU),
+                op: Some(Op::XOR),
+                src: Some(Src::K),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_MOV | bpf::BPF_X | bpf::BPF_ALU,
+            Inst {
+                class: Some(Class::ALU),
+                op: Some(Op::MOV),
+                src: Some(Src::X),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU64,
+            Inst {
+                class: Some(Class::ALU64),
+                op: Some(Op::ADD),
+                src: Some(Src::X),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_IND | bpf::BPF_W | bpf::BPF_LD,
+            Inst {
+                class: Some(Class::LD),
+                size: Some(Size::W),
+                mode: Some(Mode::IND),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_XADD | bpf::BPF_W | bpf::BPF_STX,
+            Inst {
+                class: Some(Class::STX),
+                size: Some(Size::W),
+                mode: Some(Mode::XADD),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_XADD | bpf::BPF_DW | bpf::BPF_STX,
+            Inst {
+                class: Some(Class::STX),
+                size: Some(Size::DW),
+                mode: Some(Mode::XADD),
+                ..Inst::default()
+            },
+        ),
+        (
+            bpf::BPF_LD | bpf::BPF_DW | bpf::BPF_IMM,
+            Inst {
+                class: Some(Class::LD),
+                size: Some(Size::DW),
+                mode: Some(Mode::IMM),
+                ..Inst::default()
+            },
+        ),
+    ];
+    for (inst, decoded) in insts {
+        assert_eq!(decoded, Inst::decode(inst as u64));
+    }
 }
