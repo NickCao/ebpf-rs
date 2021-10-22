@@ -26,6 +26,7 @@
                   extensions = [ "rust-analyzer-preview" ];
                 }))
               linuxHeaders
+              rust-bindgen
             ];
           };
         }
