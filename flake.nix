@@ -19,11 +19,13 @@
         in
         {
           devShell = pkgs.mkShell {
-            buildInputs = [
-              (pkgs.rust-bin.selectLatestNightlyWith (toolchain:
+            LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+            buildInputs = with pkgs; [
+              (rust-bin.selectLatestNightlyWith (toolchain:
                 toolchain.default.override {
                   extensions = [ "rust-analyzer-preview" ];
                 }))
+              linuxHeaders
             ];
           };
         }
