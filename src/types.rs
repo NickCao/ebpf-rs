@@ -117,6 +117,22 @@ impl Inst {
     }
 }
 
+pub fn immediate(inst: u64) -> u32 {
+    (inst >> 32) as u32
+}
+
+pub fn offset(inst: u64) -> u16 {
+    (inst >> 16) as u16
+}
+
+pub fn srcreg(inst: u64) -> u8 {
+    ((inst >> 12) & 0x0f) as u8
+}
+
+pub fn dstreg(inst: u64) -> u8 {
+    ((inst >> 8) & 0x0f) as u8
+}
+
 pub fn class(inst: u64) -> Option<Class> {
     match (inst & 0x07) as u32 {
         bpf::BPF_LD => Some(Class::LD),
