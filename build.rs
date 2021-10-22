@@ -8,6 +8,8 @@ fn main() {
     println!("cargo:rerun-if-changed=src/binding/bpf.h");
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindgen::Builder::default()
+        .ctypes_prefix("cty")
+        .use_core()
         .header("src/binding/btf.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .generate()
@@ -15,6 +17,8 @@ fn main() {
         .write_to_file(out_path.join("btf.rs"))
         .expect("Couldn't write bindings!");
     bindgen::Builder::default()
+        .ctypes_prefix("cty")
+        .use_core()
         .header("src/binding/bpf.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .generate()
