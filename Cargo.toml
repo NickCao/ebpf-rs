@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 cty = "0.2"
-rbpf = "0.1.0"
 
 [build-dependencies]
 bindgen = "0.59"

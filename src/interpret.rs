@@ -3,6 +3,7 @@ use crate::types::*;
 pub fn interpret(insts: &[u64]) -> u64 {
     let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
+    let mem: [u8; 256 * 1024] = [0; 256 * 1024];
     loop {
         let inst = insts[pc as usize];
         pc += 1;
@@ -207,7 +208,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
             }
 
             JMP_K_JA => {
-                pc += off;
+                pc = pc.wrapping_add(off);
             }
             JMP_K_JEQ => {
                 if reg[dst] == imm {
@@ -330,6 +331,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 }
             }
 
+            /*
             LD_IMM_B => {}
             LD_IMM_H => {}
             LD_IMM_W => {}
@@ -365,7 +367,12 @@ pub fn interpret(insts: &[u64]) -> u64 {
             LDX_IND_DW => {}
             LDX_MEM_B => {}
             LDX_MEM_H => {}
-            LDX_MEM_W => {}
+            */
+            LDX_MEM_W => unsafe {
+                reg[dst] =
+                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u32) as u64;
+            },
+            /*
             LDX_MEM_DW => {}
             LDX_XADD_B => {}
             LDX_XADD_H => {}
@@ -407,13 +414,21 @@ pub fn interpret(insts: &[u64]) -> u64 {
             STX_IND_DW => {}
             STX_MEM_B => {}
             STX_MEM_H => {}
-            STX_MEM_W => {}
+            */
+            STX_MEM_W => unsafe {
+                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u32) =
+                    reg[src] as u32;
+            },
+            /*
             STX_MEM_DW => {}
             STX_XADD_B => {}
             STX_XADD_H => {}
             STX_XADD_W => {}
             STX_XADD_DW => {}
-            _ => {}
+            */
+            _ => {
+                unimplemented!("{:x}", inst);
+            }
         }
     }
 }
@@ -421,37 +436,9 @@ pub fn interpret(insts: &[u64]) -> u64 {
 #[cfg(test)]
 mod test {
     use crate::interpret::interpret;
-    use rbpf::assembler::assemble;
     #[test]
-    fn test() {
-        let prog = assemble(
-            "
-            mov r0, 0
-            mov r1, 1
-            mov r2, 2
-            mov r3, 3
-            mov r4, 4
-            mov r5, 5
-            mov r6, 6
-            mov r7, 7
-            mov r8, 8
-            or r0, r5
-            or r0, 0xa0
-            and r0, 0xa3
-            mov r9, 0x91
-            and r0, r9
-            lsh r0, 32
-            lsh r0, 22
-            lsh r0, r8
-            rsh r0, 32
-            rsh r0, 19
-            rsh r0, r7
-            xor r0, 0x03
-            xor r0, r2
-            exit
-            ",
-        )
-        .unwrap();
+    fn gauss() {
+        let prog = include_bytes!("tests/gauss.bin");
         let ret = interpret(
             &prog
                 .chunks_exact(8)
@@ -464,6 +451,6 @@ mod test {
                 })
                 .collect::<Vec<u64>>(),
         );
-        assert_eq!(ret, 0x11);
+        assert_eq!(ret, 5050);
     }
 }

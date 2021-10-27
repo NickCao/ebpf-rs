@@ -27,6 +27,8 @@
                 }))
               linuxHeaders
               rust-bindgen
+              llvmPackages_13.clang
+              llvmPackages_13.llvm
             ];
           };
         }
