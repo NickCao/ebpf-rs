@@ -365,15 +365,24 @@ pub fn interpret(insts: &[u64]) -> u64 {
             LDX_IND_H => {}
             LDX_IND_W => {}
             LDX_IND_DW => {}
-            LDX_MEM_B => {}
-            LDX_MEM_H => {}
             */
+            LDX_MEM_B => unsafe {
+                reg[dst] =
+                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u8) as u64;
+            },
+            LDX_MEM_H => unsafe {
+                reg[dst] =
+                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u16) as u64;
+            },
             LDX_MEM_W => unsafe {
                 reg[dst] =
                     *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u32) as u64;
             },
+            LDX_MEM_DW => unsafe {
+                reg[dst] =
+                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u64) as u64;
+            },
             /*
-            LDX_MEM_DW => {}
             LDX_XADD_B => {}
             LDX_XADD_H => {}
             LDX_XADD_W => {}
@@ -412,15 +421,24 @@ pub fn interpret(insts: &[u64]) -> u64 {
             STX_IND_H => {}
             STX_IND_W => {}
             STX_IND_DW => {}
-            STX_MEM_B => {}
-            STX_MEM_H => {}
             */
+            STX_MEM_B => unsafe {
+                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u8) =
+                    reg[src] as u8;
+            },
+            STX_MEM_H => unsafe {
+                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u16) =
+                    reg[src] as u16;
+            },
             STX_MEM_W => unsafe {
                 *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u32) =
                     reg[src] as u32;
             },
+            STX_MEM_DW => unsafe {
+                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u64) =
+                    reg[src] as u64;
+            },
             /*
-            STX_MEM_DW => {}
             STX_XADD_B => {}
             STX_XADD_H => {}
             STX_XADD_W => {}
