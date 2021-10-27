@@ -6,8 +6,6 @@ pub fn interpret(insts: &[u64]) -> u64 {
     let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
     let stack: [u8; STACK_SIZE] = [0; STACK_SIZE];
-    // reg[1] = (uintptr_t)mem;
-    // reg[2] = (uint64_t)mem_len;
     unsafe {
         reg[10] = stack.as_ptr().add(STACK_SIZE) as u64;
     }
@@ -337,12 +335,13 @@ pub fn interpret(insts: &[u64]) -> u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
-
+            LD_IMM_DW => {
+                let next = insts[pc as usize];
+                pc += 1;
+                reg[dst] = imm + ((next >> 32) << 32);
+            }
             /*
-            LD_IMM_B => {}
-            LD_IMM_H => {}
-            LD_IMM_W => {}
-            LD_IMM_DW => {}
+            TODO: non generic inst
             LD_ABS_B => {}
             LD_ABS_H => {}
             LD_ABS_W => {}
@@ -351,27 +350,6 @@ pub fn interpret(insts: &[u64]) -> u64 {
             LD_IND_H => {}
             LD_IND_W => {}
             LD_IND_DW => {}
-            LD_MEM_B => {}
-            LD_MEM_H => {}
-            LD_MEM_W => {}
-            LD_MEM_DW => {}
-            LD_XADD_B => {}
-            LD_XADD_H => {}
-            LD_XADD_W => {}
-            LD_XADD_DW => {}
-
-            LDX_IMM_B => {}
-            LDX_IMM_H => {}
-            LDX_IMM_W => {}
-            LDX_IMM_DW => {}
-            LDX_ABS_B => {}
-            LDX_ABS_H => {}
-            LDX_ABS_W => {}
-            LDX_ABS_DW => {}
-            LDX_IND_B => {}
-            LDX_IND_H => {}
-            LDX_IND_W => {}
-            LDX_IND_DW => {}
             */
             LDX_MEM_B => unsafe {
                 reg[dst] = *((reg[src] as *mut u8).offset(off as isize) as *mut u8) as u64;
@@ -385,25 +363,6 @@ pub fn interpret(insts: &[u64]) -> u64 {
             LDX_MEM_DW => unsafe {
                 reg[dst] = *((reg[src] as *mut u8).offset(off as isize) as *mut u64) as u64;
             },
-            /*
-            LDX_XADD_B => {}
-            LDX_XADD_H => {}
-            LDX_XADD_W => {}
-            LDX_XADD_DW => {}
-
-            ST_IMM_B => {}
-            ST_IMM_H => {}
-            ST_IMM_W => {}
-            ST_IMM_DW => {}
-            ST_ABS_B => {}
-            ST_ABS_H => {}
-            ST_ABS_W => {}
-            ST_ABS_DW => {}
-            ST_IND_B => {}
-            ST_IND_H => {}
-            ST_IND_W => {}
-            ST_IND_DW => {}
-            */
             ST_MEM_B => unsafe {
                 *((reg[dst] as *mut u8).offset(off as isize) as *mut u8) = imm as u8;
             },
@@ -416,25 +375,6 @@ pub fn interpret(insts: &[u64]) -> u64 {
             ST_MEM_DW => unsafe {
                 *((reg[dst] as *mut u8).offset(off as isize) as *mut u64) = imm as u64;
             },
-            /*
-            ST_XADD_B => {}
-            ST_XADD_H => {}
-            ST_XADD_W => {}
-            ST_XADD_DW => {}
-
-            STX_IMM_B => {}
-            STX_IMM_H => {}
-            STX_IMM_W => {}
-            STX_IMM_DW => {}
-            STX_ABS_B => {}
-            STX_ABS_H => {}
-            STX_ABS_W => {}
-            STX_ABS_DW => {}
-            STX_IND_B => {}
-            STX_IND_H => {}
-            STX_IND_W => {}
-            STX_IND_DW => {}
-            */
             STX_MEM_B => unsafe {
                 *((reg[dst] as *mut u8).offset(off as isize) as *mut u8) = reg[src] as u8;
             },
@@ -447,12 +387,6 @@ pub fn interpret(insts: &[u64]) -> u64 {
             STX_MEM_DW => unsafe {
                 *((reg[dst] as *mut u8).offset(off as isize) as *mut u64) = reg[src] as u64;
             },
-            /*
-            STX_XADD_B => {}
-            STX_XADD_H => {}
-            STX_XADD_W => {}
-            STX_XADD_DW => {}
-            */
             _ => {
                 unimplemented!("{:x}", inst);
             }
