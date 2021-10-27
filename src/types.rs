@@ -1,68 +1,201 @@
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum Class {
-    LD,
-    LDX,
-    ST,
-    STX,
-    ALU,
-    JMP,
-    JMP32,
-    ALU64,
-}
+use crate::binding::bpf::*;
 
-#[derive(Debug, PartialEq)]
-pub enum Size {
-    W,
-    H,
-    B,
-    DW,
-}
+pub const ALU_K_ADD: u8 = (BPF_ALU | BPF_K | BPF_ADD) as u8;
+pub const ALU_X_ADD: u8 = (BPF_ALU | BPF_X | BPF_ADD) as u8;
+pub const ALU_K_SUB: u8 = (BPF_ALU | BPF_K | BPF_SUB) as u8;
+pub const ALU_X_SUB: u8 = (BPF_ALU | BPF_X | BPF_SUB) as u8;
+pub const ALU_K_MUL: u8 = (BPF_ALU | BPF_K | BPF_MUL) as u8;
+pub const ALU_X_MUL: u8 = (BPF_ALU | BPF_X | BPF_MUL) as u8;
+pub const ALU_K_DIV: u8 = (BPF_ALU | BPF_K | BPF_DIV) as u8;
+pub const ALU_X_DIV: u8 = (BPF_ALU | BPF_X | BPF_DIV) as u8;
+pub const ALU_K_OR: u8 = (BPF_ALU | BPF_K | BPF_OR) as u8;
+pub const ALU_X_OR: u8 = (BPF_ALU | BPF_X | BPF_OR) as u8;
+pub const ALU_K_AND: u8 = (BPF_ALU | BPF_K | BPF_AND) as u8;
+pub const ALU_X_AND: u8 = (BPF_ALU | BPF_X | BPF_AND) as u8;
+pub const ALU_K_LSH: u8 = (BPF_ALU | BPF_K | BPF_LSH) as u8;
+pub const ALU_X_LSH: u8 = (BPF_ALU | BPF_X | BPF_LSH) as u8;
+pub const ALU_K_RSH: u8 = (BPF_ALU | BPF_K | BPF_RSH) as u8;
+pub const ALU_X_RSH: u8 = (BPF_ALU | BPF_X | BPF_RSH) as u8;
+pub const ALU_K_NEG: u8 = (BPF_ALU | BPF_K | BPF_NEG) as u8;
+pub const ALU_X_NEG: u8 = (BPF_ALU | BPF_X | BPF_NEG) as u8;
+pub const ALU_K_MOD: u8 = (BPF_ALU | BPF_K | BPF_MOD) as u8;
+pub const ALU_X_MOD: u8 = (BPF_ALU | BPF_X | BPF_MOD) as u8;
+pub const ALU_K_XOR: u8 = (BPF_ALU | BPF_K | BPF_XOR) as u8;
+pub const ALU_X_XOR: u8 = (BPF_ALU | BPF_X | BPF_XOR) as u8;
+pub const ALU_K_MOV: u8 = (BPF_ALU | BPF_K | BPF_MOV) as u8;
+pub const ALU_X_MOV: u8 = (BPF_ALU | BPF_X | BPF_MOV) as u8;
+pub const ALU_K_ARSH: u8 = (BPF_ALU | BPF_K | BPF_ARSH) as u8;
+pub const ALU_X_ARSH: u8 = (BPF_ALU | BPF_X | BPF_ARSH) as u8;
+pub const ALU_K_END: u8 = (BPF_ALU | BPF_K | BPF_END) as u8;
+pub const ALU_X_END: u8 = (BPF_ALU | BPF_X | BPF_END) as u8;
 
-#[derive(Debug, PartialEq)]
-pub enum Mode {
-    IMM,
-    ABS,
-    IND,
-    MEM,
-    LEN,
-    MSH,
-    XADD,
-}
+pub const ALU64_K_ADD: u8 = (BPF_ALU64 | BPF_K | BPF_ADD) as u8;
+pub const ALU64_X_ADD: u8 = (BPF_ALU64 | BPF_X | BPF_ADD) as u8;
+pub const ALU64_K_SUB: u8 = (BPF_ALU64 | BPF_K | BPF_SUB) as u8;
+pub const ALU64_X_SUB: u8 = (BPF_ALU64 | BPF_X | BPF_SUB) as u8;
+pub const ALU64_K_MUL: u8 = (BPF_ALU64 | BPF_K | BPF_MUL) as u8;
+pub const ALU64_X_MUL: u8 = (BPF_ALU64 | BPF_X | BPF_MUL) as u8;
+pub const ALU64_K_DIV: u8 = (BPF_ALU64 | BPF_K | BPF_DIV) as u8;
+pub const ALU64_X_DIV: u8 = (BPF_ALU64 | BPF_X | BPF_DIV) as u8;
+pub const ALU64_K_OR: u8 = (BPF_ALU64 | BPF_K | BPF_OR) as u8;
+pub const ALU64_X_OR: u8 = (BPF_ALU64 | BPF_X | BPF_OR) as u8;
+pub const ALU64_K_AND: u8 = (BPF_ALU64 | BPF_K | BPF_AND) as u8;
+pub const ALU64_X_AND: u8 = (BPF_ALU64 | BPF_X | BPF_AND) as u8;
+pub const ALU64_K_LSH: u8 = (BPF_ALU64 | BPF_K | BPF_LSH) as u8;
+pub const ALU64_X_LSH: u8 = (BPF_ALU64 | BPF_X | BPF_LSH) as u8;
+pub const ALU64_K_RSH: u8 = (BPF_ALU64 | BPF_K | BPF_RSH) as u8;
+pub const ALU64_X_RSH: u8 = (BPF_ALU64 | BPF_X | BPF_RSH) as u8;
+pub const ALU64_K_NEG: u8 = (BPF_ALU64 | BPF_K | BPF_NEG) as u8;
+pub const ALU64_X_NEG: u8 = (BPF_ALU64 | BPF_X | BPF_NEG) as u8;
+pub const ALU64_K_MOD: u8 = (BPF_ALU64 | BPF_K | BPF_MOD) as u8;
+pub const ALU64_X_MOD: u8 = (BPF_ALU64 | BPF_X | BPF_MOD) as u8;
+pub const ALU64_K_XOR: u8 = (BPF_ALU64 | BPF_K | BPF_XOR) as u8;
+pub const ALU64_X_XOR: u8 = (BPF_ALU64 | BPF_X | BPF_XOR) as u8;
+pub const ALU64_K_MOV: u8 = (BPF_ALU64 | BPF_K | BPF_MOV) as u8;
+pub const ALU64_X_MOV: u8 = (BPF_ALU64 | BPF_X | BPF_MOV) as u8;
+pub const ALU64_K_ARSH: u8 = (BPF_ALU64 | BPF_K | BPF_ARSH) as u8;
+pub const ALU64_X_ARSH: u8 = (BPF_ALU64 | BPF_X | BPF_ARSH) as u8;
+pub const ALU64_K_END: u8 = (BPF_ALU64 | BPF_K | BPF_END) as u8;
+pub const ALU64_X_END: u8 = (BPF_ALU64 | BPF_X | BPF_END) as u8;
 
-#[derive(Debug, PartialEq)]
-pub enum Op {
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    OR,
-    AND,
-    LSH,
-    RSH,
-    NEG,
-    MOD,
-    XOR,
-    MOV,
-    ARSH,
-    END,
-    JA,
-    JEQ,
-    JGT,
-    JGE,
-    JSET,
-    JNE,
-    JSGT,
-    JSGE,
-    CALL,
-    EXIT,
-    JLT,
-    JLE,
-    JSLT,
-    JSLE,
-}
+pub const JMP_K_JA: u8 = (BPF_JMP | BPF_K | BPF_JA) as u8;
+pub const JMP_X_JA: u8 = (BPF_JMP | BPF_X | BPF_JA) as u8;
+pub const JMP_K_JEQ: u8 = (BPF_JMP | BPF_K | BPF_JEQ) as u8;
+pub const JMP_X_JEQ: u8 = (BPF_JMP | BPF_X | BPF_JEQ) as u8;
+pub const JMP_K_JGT: u8 = (BPF_JMP | BPF_K | BPF_JGT) as u8;
+pub const JMP_X_JGT: u8 = (BPF_JMP | BPF_X | BPF_JGT) as u8;
+pub const JMP_K_JGE: u8 = (BPF_JMP | BPF_K | BPF_JGE) as u8;
+pub const JMP_X_JGE: u8 = (BPF_JMP | BPF_X | BPF_JGE) as u8;
+pub const JMP_K_JSET: u8 = (BPF_JMP | BPF_K | BPF_JSET) as u8;
+pub const JMP_X_JSET: u8 = (BPF_JMP | BPF_X | BPF_JSET) as u8;
+pub const JMP_K_JNE: u8 = (BPF_JMP | BPF_K | BPF_JNE) as u8;
+pub const JMP_X_JNE: u8 = (BPF_JMP | BPF_X | BPF_JNE) as u8;
+pub const JMP_K_JSGT: u8 = (BPF_JMP | BPF_K | BPF_JSGT) as u8;
+pub const JMP_X_JSGT: u8 = (BPF_JMP | BPF_X | BPF_JSGT) as u8;
+pub const JMP_K_JSGE: u8 = (BPF_JMP | BPF_K | BPF_JSGE) as u8;
+pub const JMP_X_JSGE: u8 = (BPF_JMP | BPF_X | BPF_JSGE) as u8;
+pub const JMP_K_CALL: u8 = (BPF_JMP | BPF_K | BPF_CALL) as u8;
+pub const JMP_X_CALL: u8 = (BPF_JMP | BPF_X | BPF_CALL) as u8;
+pub const JMP_K_EXIT: u8 = (BPF_JMP | BPF_K | BPF_EXIT) as u8;
+pub const JMP_X_EXIT: u8 = (BPF_JMP | BPF_X | BPF_EXIT) as u8;
+pub const JMP_K_JLT: u8 = (BPF_JMP | BPF_K | BPF_JLT) as u8;
+pub const JMP_X_JLT: u8 = (BPF_JMP | BPF_X | BPF_JLT) as u8;
+pub const JMP_K_JLE: u8 = (BPF_JMP | BPF_K | BPF_JLE) as u8;
+pub const JMP_X_JLE: u8 = (BPF_JMP | BPF_X | BPF_JLE) as u8;
+pub const JMP_K_JSLT: u8 = (BPF_JMP | BPF_K | BPF_JSLT) as u8;
+pub const JMP_X_JSLT: u8 = (BPF_JMP | BPF_X | BPF_JSLT) as u8;
+pub const JMP_K_JSLE: u8 = (BPF_JMP | BPF_K | BPF_JSLE) as u8;
+pub const JMP_X_JSLE: u8 = (BPF_JMP | BPF_X | BPF_JSLE) as u8;
 
-#[derive(Debug, PartialEq)]
-pub enum Src {
-    K,
-    X,
-}
+pub const JMP32_K_JA: u8 = (BPF_JMP32 | BPF_K | BPF_JA) as u8;
+pub const JMP32_X_JA: u8 = (BPF_JMP32 | BPF_X | BPF_JA) as u8;
+pub const JMP32_K_JEQ: u8 = (BPF_JMP32 | BPF_K | BPF_JEQ) as u8;
+pub const JMP32_X_JEQ: u8 = (BPF_JMP32 | BPF_X | BPF_JEQ) as u8;
+pub const JMP32_K_JGT: u8 = (BPF_JMP32 | BPF_K | BPF_JGT) as u8;
+pub const JMP32_X_JGT: u8 = (BPF_JMP32 | BPF_X | BPF_JGT) as u8;
+pub const JMP32_K_JGE: u8 = (BPF_JMP32 | BPF_K | BPF_JGE) as u8;
+pub const JMP32_X_JGE: u8 = (BPF_JMP32 | BPF_X | BPF_JGE) as u8;
+pub const JMP32_K_JSET: u8 = (BPF_JMP32 | BPF_K | BPF_JSET) as u8;
+pub const JMP32_X_JSET: u8 = (BPF_JMP32 | BPF_X | BPF_JSET) as u8;
+pub const JMP32_K_JNE: u8 = (BPF_JMP32 | BPF_K | BPF_JNE) as u8;
+pub const JMP32_X_JNE: u8 = (BPF_JMP32 | BPF_X | BPF_JNE) as u8;
+pub const JMP32_K_JSGT: u8 = (BPF_JMP32 | BPF_K | BPF_JSGT) as u8;
+pub const JMP32_X_JSGT: u8 = (BPF_JMP32 | BPF_X | BPF_JSGT) as u8;
+pub const JMP32_K_JSGE: u8 = (BPF_JMP32 | BPF_K | BPF_JSGE) as u8;
+pub const JMP32_X_JSGE: u8 = (BPF_JMP32 | BPF_X | BPF_JSGE) as u8;
+pub const JMP32_K_CALL: u8 = (BPF_JMP32 | BPF_K | BPF_CALL) as u8;
+pub const JMP32_X_CALL: u8 = (BPF_JMP32 | BPF_X | BPF_CALL) as u8;
+pub const JMP32_K_EXIT: u8 = (BPF_JMP32 | BPF_K | BPF_EXIT) as u8;
+pub const JMP32_X_EXIT: u8 = (BPF_JMP32 | BPF_X | BPF_EXIT) as u8;
+pub const JMP32_K_JLT: u8 = (BPF_JMP32 | BPF_K | BPF_JLT) as u8;
+pub const JMP32_X_JLT: u8 = (BPF_JMP32 | BPF_X | BPF_JLT) as u8;
+pub const JMP32_K_JLE: u8 = (BPF_JMP32 | BPF_K | BPF_JLE) as u8;
+pub const JMP32_X_JLE: u8 = (BPF_JMP32 | BPF_X | BPF_JLE) as u8;
+pub const JMP32_K_JSLT: u8 = (BPF_JMP32 | BPF_K | BPF_JSLT) as u8;
+pub const JMP32_X_JSLT: u8 = (BPF_JMP32 | BPF_X | BPF_JSLT) as u8;
+pub const JMP32_K_JSLE: u8 = (BPF_JMP32 | BPF_K | BPF_JSLE) as u8;
+pub const JMP32_X_JSLE: u8 = (BPF_JMP32 | BPF_X | BPF_JSLE) as u8;
+
+pub const LD_IMM_B: u8 = (BPF_LD | BPF_IMM | BPF_B) as u8;
+pub const LD_IMM_H: u8 = (BPF_LD | BPF_IMM | BPF_H) as u8;
+pub const LD_IMM_W: u8 = (BPF_LD | BPF_IMM | BPF_W) as u8;
+pub const LD_IMM_DW: u8 = (BPF_LD | BPF_IMM | BPF_DW) as u8;
+pub const LD_ABS_B: u8 = (BPF_LD | BPF_ABS | BPF_B) as u8;
+pub const LD_ABS_H: u8 = (BPF_LD | BPF_ABS | BPF_H) as u8;
+pub const LD_ABS_W: u8 = (BPF_LD | BPF_ABS | BPF_W) as u8;
+pub const LD_ABS_DW: u8 = (BPF_LD | BPF_ABS | BPF_DW) as u8;
+pub const LD_IND_B: u8 = (BPF_LD | BPF_IND | BPF_B) as u8;
+pub const LD_IND_H: u8 = (BPF_LD | BPF_IND | BPF_H) as u8;
+pub const LD_IND_W: u8 = (BPF_LD | BPF_IND | BPF_W) as u8;
+pub const LD_IND_DW: u8 = (BPF_LD | BPF_IND | BPF_DW) as u8;
+pub const LD_MEM_B: u8 = (BPF_LD | BPF_MEM | BPF_B) as u8;
+pub const LD_MEM_H: u8 = (BPF_LD | BPF_MEM | BPF_H) as u8;
+pub const LD_MEM_W: u8 = (BPF_LD | BPF_MEM | BPF_W) as u8;
+pub const LD_MEM_DW: u8 = (BPF_LD | BPF_MEM | BPF_DW) as u8;
+pub const LD_XADD_B: u8 = (BPF_LD | BPF_XADD | BPF_B) as u8;
+pub const LD_XADD_H: u8 = (BPF_LD | BPF_XADD | BPF_H) as u8;
+pub const LD_XADD_W: u8 = (BPF_LD | BPF_XADD | BPF_W) as u8;
+pub const LD_XADD_DW: u8 = (BPF_LD | BPF_XADD | BPF_DW) as u8;
+
+pub const LDX_IMM_B: u8 = (BPF_LDX | BPF_IMM | BPF_B) as u8;
+pub const LDX_IMM_H: u8 = (BPF_LDX | BPF_IMM | BPF_H) as u8;
+pub const LDX_IMM_W: u8 = (BPF_LDX | BPF_IMM | BPF_W) as u8;
+pub const LDX_IMM_DW: u8 = (BPF_LDX | BPF_IMM | BPF_DW) as u8;
+pub const LDX_ABS_B: u8 = (BPF_LDX | BPF_ABS | BPF_B) as u8;
+pub const LDX_ABS_H: u8 = (BPF_LDX | BPF_ABS | BPF_H) as u8;
+pub const LDX_ABS_W: u8 = (BPF_LDX | BPF_ABS | BPF_W) as u8;
+pub const LDX_ABS_DW: u8 = (BPF_LDX | BPF_ABS | BPF_DW) as u8;
+pub const LDX_IND_B: u8 = (BPF_LDX | BPF_IND | BPF_B) as u8;
+pub const LDX_IND_H: u8 = (BPF_LDX | BPF_IND | BPF_H) as u8;
+pub const LDX_IND_W: u8 = (BPF_LDX | BPF_IND | BPF_W) as u8;
+pub const LDX_IND_DW: u8 = (BPF_LDX | BPF_IND | BPF_DW) as u8;
+pub const LDX_MEM_B: u8 = (BPF_LDX | BPF_MEM | BPF_B) as u8;
+pub const LDX_MEM_H: u8 = (BPF_LDX | BPF_MEM | BPF_H) as u8;
+pub const LDX_MEM_W: u8 = (BPF_LDX | BPF_MEM | BPF_W) as u8;
+pub const LDX_MEM_DW: u8 = (BPF_LDX | BPF_MEM | BPF_DW) as u8;
+pub const LDX_XADD_B: u8 = (BPF_LDX | BPF_XADD | BPF_B) as u8;
+pub const LDX_XADD_H: u8 = (BPF_LDX | BPF_XADD | BPF_H) as u8;
+pub const LDX_XADD_W: u8 = (BPF_LDX | BPF_XADD | BPF_W) as u8;
+pub const LDX_XADD_DW: u8 = (BPF_LDX | BPF_XADD | BPF_DW) as u8;
+
+pub const ST_IMM_B: u8 = (BPF_ST | BPF_IMM | BPF_B) as u8;
+pub const ST_IMM_H: u8 = (BPF_ST | BPF_IMM | BPF_H) as u8;
+pub const ST_IMM_W: u8 = (BPF_ST | BPF_IMM | BPF_W) as u8;
+pub const ST_IMM_DW: u8 = (BPF_ST | BPF_IMM | BPF_DW) as u8;
+pub const ST_ABS_B: u8 = (BPF_ST | BPF_ABS | BPF_B) as u8;
+pub const ST_ABS_H: u8 = (BPF_ST | BPF_ABS | BPF_H) as u8;
+pub const ST_ABS_W: u8 = (BPF_ST | BPF_ABS | BPF_W) as u8;
+pub const ST_ABS_DW: u8 = (BPF_ST | BPF_ABS | BPF_DW) as u8;
+pub const ST_IND_B: u8 = (BPF_ST | BPF_IND | BPF_B) as u8;
+pub const ST_IND_H: u8 = (BPF_ST | BPF_IND | BPF_H) as u8;
+pub const ST_IND_W: u8 = (BPF_ST | BPF_IND | BPF_W) as u8;
+pub const ST_IND_DW: u8 = (BPF_ST | BPF_IND | BPF_DW) as u8;
+pub const ST_MEM_B: u8 = (BPF_ST | BPF_MEM | BPF_B) as u8;
+pub const ST_MEM_H: u8 = (BPF_ST | BPF_MEM | BPF_H) as u8;
+pub const ST_MEM_W: u8 = (BPF_ST | BPF_MEM | BPF_W) as u8;
+pub const ST_MEM_DW: u8 = (BPF_ST | BPF_MEM | BPF_DW) as u8;
+pub const ST_XADD_B: u8 = (BPF_ST | BPF_XADD | BPF_B) as u8;
+pub const ST_XADD_H: u8 = (BPF_ST | BPF_XADD | BPF_H) as u8;
+pub const ST_XADD_W: u8 = (BPF_ST | BPF_XADD | BPF_W) as u8;
+pub const ST_XADD_DW: u8 = (BPF_ST | BPF_XADD | BPF_DW) as u8;
+
+pub const STX_IMM_B: u8 = (BPF_STX | BPF_IMM | BPF_B) as u8;
+pub const STX_IMM_H: u8 = (BPF_STX | BPF_IMM | BPF_H) as u8;
+pub const STX_IMM_W: u8 = (BPF_STX | BPF_IMM | BPF_W) as u8;
+pub const STX_IMM_DW: u8 = (BPF_STX | BPF_IMM | BPF_DW) as u8;
+pub const STX_ABS_B: u8 = (BPF_STX | BPF_ABS | BPF_B) as u8;
+pub const STX_ABS_H: u8 = (BPF_STX | BPF_ABS | BPF_H) as u8;
+pub const STX_ABS_W: u8 = (BPF_STX | BPF_ABS | BPF_W) as u8;
+pub const STX_ABS_DW: u8 = (BPF_STX | BPF_ABS | BPF_DW) as u8;
+pub const STX_IND_B: u8 = (BPF_STX | BPF_IND | BPF_B) as u8;
+pub const STX_IND_H: u8 = (BPF_STX | BPF_IND | BPF_H) as u8;
+pub const STX_IND_W: u8 = (BPF_STX | BPF_IND | BPF_W) as u8;
+pub const STX_IND_DW: u8 = (BPF_STX | BPF_IND | BPF_DW) as u8;
+pub const STX_MEM_B: u8 = (BPF_STX | BPF_MEM | BPF_B) as u8;
+pub const STX_MEM_H: u8 = (BPF_STX | BPF_MEM | BPF_H) as u8;
+pub const STX_MEM_W: u8 = (BPF_STX | BPF_MEM | BPF_W) as u8;
+pub const STX_MEM_DW: u8 = (BPF_STX | BPF_MEM | BPF_DW) as u8;
+pub const STX_XADD_B: u8 = (BPF_STX | BPF_XADD | BPF_B) as u8;
+pub const STX_XADD_H: u8 = (BPF_STX | BPF_XADD | BPF_H) as u8;
+pub const STX_XADD_W: u8 = (BPF_STX | BPF_XADD | BPF_W) as u8;
+pub const STX_XADD_DW: u8 = (BPF_STX | BPF_XADD | BPF_DW) as u8;
