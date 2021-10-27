@@ -11,3 +11,4 @@ A verifier, interpreter, JIT compiler for eBPF and corresponding facilities to h
 [linux bpf impl](https://elixir.bootlin.com/linux/v5.14.12/source/kernel/bpf) kernel/bpf  
 [BPF and XDP Reference Guide](https://docs.cilium.io/en/stable/bpf/) from cilium documentation  
 [BPF Internals](https://www.usenix.org/conference/lisa21/presentation/gregg-bpf) from usenix presentation  
+[Unofficial eBPF spec](https://github.com/iovisor/bpf-docs/blob/master/eBPF.md) from iovisor project  
