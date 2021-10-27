@@ -85,6 +85,10 @@ impl fmt::Debug for Src {
 
 #[derive(Debug, PartialEq)]
 pub struct Inst {
+    imm: i32,
+    off: i16,
+    srcreg: u8,
+    dstreg: u8,
     class: Option<Class>,
     size: Option<Size>,
     mode: Option<Mode>,
@@ -95,6 +99,10 @@ pub struct Inst {
 impl Default for Inst {
     fn default() -> Self {
         Self {
+            imm: 0,
+            off: 0,
+            srcreg: 0,
+            dstreg: 0,
             class: None,
             size: None,
             mode: None,
@@ -108,6 +116,10 @@ impl Inst {
     pub fn decode(inst: u64) -> Self {
         let cls = class(inst).unwrap();
         Self {
+            imm: immediate(inst),
+            off: offset(inst),
+            srcreg: srcreg(inst),
+            dstreg: dstreg(inst),
             class: Some(cls),
             size: size(inst, cls),
             mode: mode(inst, cls),
@@ -117,12 +129,12 @@ impl Inst {
     }
 }
 
-pub fn immediate(inst: u64) -> u32 {
-    (inst >> 32) as u32
+pub fn immediate(inst: u64) -> i32 {
+    (inst >> 32) as i32
 }
 
-pub fn offset(inst: u64) -> u16 {
-    (inst >> 16) as u16
+pub fn offset(inst: u64) -> i16 {
+    (inst >> 16) as i16
 }
 
 pub fn srcreg(inst: u64) -> u8 {
@@ -230,9 +242,9 @@ pub fn src(inst: u64, cls: Class) -> Option<Src> {
 #[cfg(test)]
 #[test]
 fn inst() {
-    let insts = [
+    let insts: [(u64, Inst); 9] = [
         (
-            bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU,
+            (bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU).into(),
             Inst {
                 class: Some(Class::ALU),
                 op: Some(Op::ADD),
@@ -241,7 +253,7 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_XOR | bpf::BPF_K | bpf::BPF_ALU,
+            (bpf::BPF_XOR | bpf::BPF_K | bpf::BPF_ALU).into(),
             Inst {
                 class: Some(Class::ALU),
                 op: Some(Op::XOR),
@@ -250,7 +262,7 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_MOV | bpf::BPF_X | bpf::BPF_ALU,
+            (bpf::BPF_MOV | bpf::BPF_X | bpf::BPF_ALU).into(),
             Inst {
                 class: Some(Class::ALU),
                 op: Some(Op::MOV),
@@ -259,7 +271,7 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU64,
+            (bpf::BPF_ADD | bpf::BPF_X | bpf::BPF_ALU64).into(),
             Inst {
                 class: Some(Class::ALU64),
                 op: Some(Op::ADD),
@@ -268,7 +280,7 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_IND | bpf::BPF_W | bpf::BPF_LD,
+            (bpf::BPF_IND | bpf::BPF_W | bpf::BPF_LD).into(),
             Inst {
                 class: Some(Class::LD),
                 size: Some(Size::W),
@@ -277,7 +289,7 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_XADD | bpf::BPF_W | bpf::BPF_STX,
+            (bpf::BPF_XADD | bpf::BPF_W | bpf::BPF_STX).into(),
             Inst {
                 class: Some(Class::STX),
                 size: Some(Size::W),
@@ -286,7 +298,7 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_XADD | bpf::BPF_DW | bpf::BPF_STX,
+            (bpf::BPF_XADD | bpf::BPF_DW | bpf::BPF_STX).into(),
             Inst {
                 class: Some(Class::STX),
                 size: Some(Size::DW),
@@ -295,11 +307,22 @@ fn inst() {
             },
         ),
         (
-            bpf::BPF_LD | bpf::BPF_DW | bpf::BPF_IMM,
+            (bpf::BPF_LD | bpf::BPF_DW | bpf::BPF_IMM).into(),
             Inst {
                 class: Some(Class::LD),
                 size: Some(Size::DW),
                 mode: Some(Mode::IMM),
+                ..Inst::default()
+            },
+        ),
+        (
+            0x000000ff000001b4,
+            Inst {
+                imm: 0x000000ff,
+                dstreg: 1,
+                class: Some(Class::ALU),
+                op: Some(Op::MOV),
+                src: Some(Src::K),
                 ..Inst::default()
             },
         ),
