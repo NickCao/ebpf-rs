@@ -2,10 +2,11 @@ use crate::types::*;
 
 pub fn interpret(inst: u64) {
     let imm: u64 = ((inst >> 32) & u32::MAX as u64) as u64;
-    let off: u64 = ((inst >> 16) & u16::MAX as u64) as u64;
+    let off: u16 = ((inst >> 16) & u16::MAX as u64) as u16;
     let src: usize = ((inst >> 12) & 0x0f) as usize;
     let dst: usize = ((inst >> 8) & 0x0f) as usize;
     let op: u8 = (inst & u8::MAX as u64) as u8;
+    let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
     match op {
         ALU_K_ADD => {
@@ -74,10 +75,6 @@ pub fn interpret(inst: u64) {
             reg[dst] &= u32::MAX as u64;
         }
         ALU_K_NEG => {
-            reg[dst] = (-(reg[dst] as i64)) as u64;
-            reg[dst] &= u32::MAX as u64;
-        }
-        ALU_X_NEG => {
             reg[dst] = (-(reg[dst] as i64)) as u64;
             reg[dst] &= u32::MAX as u64;
         }
@@ -180,9 +177,6 @@ pub fn interpret(inst: u64) {
         ALU64_K_NEG => {
             reg[dst] = (-(reg[dst] as i64)) as u64;
         }
-        ALU64_X_NEG => {
-            reg[dst] = (-(reg[dst] as i64)) as u64;
-        }
         // TODO: check div by zero
         ALU64_K_MOD => {
             reg[dst] %= imm;
@@ -208,66 +202,124 @@ pub fn interpret(inst: u64) {
         ALU64_X_ARSH => {
             reg[dst] = (reg[dst] as i64 >> reg[src]) as u64;
         }
-        ALU64_K_END => {}
-        ALU64_X_END => {}
 
-        JMP_K_JA => {}
-        JMP_X_JA => {}
-        JMP_K_JEQ => {}
-        JMP_X_JEQ => {}
-        JMP_K_JGT => {}
-        JMP_X_JGT => {}
-        JMP_K_JGE => {}
-        JMP_X_JGE => {}
-        JMP_K_JSET => {}
-        JMP_X_JSET => {}
-        JMP_K_JNE => {}
-        JMP_X_JNE => {}
-        JMP_K_JSGT => {}
-        JMP_X_JSGT => {}
-        JMP_K_JSGE => {}
-        JMP_X_JSGE => {}
+        JMP_K_JA => {
+            pc += off;
+        }
+        JMP_K_JEQ => {
+            if reg[dst] == imm {
+                pc += off;
+            }
+        }
+        JMP_X_JEQ => {
+            if reg[dst] == reg[src] {
+                pc += off;
+            }
+        }
+        JMP_K_JGT => {
+            if reg[dst] > imm {
+                pc += off;
+            }
+        }
+        JMP_X_JGT => {
+            if reg[dst] > reg[src] {
+                pc += off;
+            }
+        }
+        JMP_K_JGE => {
+            if reg[dst] >= imm {
+                pc += off;
+            }
+        }
+        JMP_X_JGE => {
+            if reg[dst] >= reg[src] {
+                pc += off;
+            }
+        }
+        JMP_K_JSET => {
+            if reg[dst] & imm != 0 {
+                pc += off;
+            }
+        }
+        JMP_X_JSET => {
+            if reg[dst] & reg[src] != 0 {
+                pc += off;
+            }
+        }
+        JMP_K_JNE => {
+            if reg[dst] != imm {
+                pc += off;
+            }
+        }
+        JMP_X_JNE => {
+            if reg[dst] != reg[src] {
+                pc += off;
+            }
+        }
+        JMP_K_JSGT => {
+            if reg[dst] as i64 > imm as i64 {
+                pc += off;
+            }
+        }
+        JMP_X_JSGT => {
+            if reg[dst] as i64 > reg[src] as i64 {
+                pc += off;
+            }
+        }
+        JMP_K_JSGE => {
+            if reg[dst] as i64 >= imm as i64 {
+                pc += off;
+            }
+        }
+        JMP_X_JSGE => {
+            if reg[dst] as i64 >= reg[src] as i64 {
+                pc += off;
+            }
+        }
         JMP_K_CALL => {}
         JMP_X_CALL => {}
         JMP_K_EXIT => {}
         JMP_X_EXIT => {}
-        JMP_K_JLT => {}
-        JMP_X_JLT => {}
-        JMP_K_JLE => {}
-        JMP_X_JLE => {}
-        JMP_K_JSLT => {}
-        JMP_X_JSLT => {}
-        JMP_K_JSLE => {}
-        JMP_X_JSLE => {}
-
-        JMP32_K_JA => {}
-        JMP32_X_JA => {}
-        JMP32_K_JEQ => {}
-        JMP32_X_JEQ => {}
-        JMP32_K_JGT => {}
-        JMP32_X_JGT => {}
-        JMP32_K_JGE => {}
-        JMP32_X_JGE => {}
-        JMP32_K_JSET => {}
-        JMP32_X_JSET => {}
-        JMP32_K_JNE => {}
-        JMP32_X_JNE => {}
-        JMP32_K_JSGT => {}
-        JMP32_X_JSGT => {}
-        JMP32_K_JSGE => {}
-        JMP32_X_JSGE => {}
-        JMP32_K_CALL => {}
-        JMP32_X_CALL => {}
-        JMP32_K_EXIT => {}
-        JMP32_X_EXIT => {}
-        JMP32_K_JLT => {}
-        JMP32_X_JLT => {}
-        JMP32_K_JLE => {}
-        JMP32_X_JLE => {}
-        JMP32_K_JSLT => {}
-        JMP32_X_JSLT => {}
-        JMP32_K_JSLE => {}
-        JMP32_X_JSLE => {}
+        JMP_K_JLT => {
+            if reg[dst] < imm {
+                pc += off;
+            }
+        }
+        JMP_X_JLT => {
+            if reg[dst] < reg[src] {
+                pc += off;
+            }
+        }
+        JMP_K_JLE => {
+            if reg[dst] <= imm {
+                pc += off;
+            }
+        }
+        JMP_X_JLE => {
+            if reg[dst] <= reg[src] {
+                pc += off;
+            }
+        }
+        JMP_K_JSLT => {
+            if (reg[dst] as i64) < imm as i64 {
+                pc += off;
+            }
+        }
+        JMP_X_JSLT => {
+            if (reg[dst] as i64) < reg[src] as i64 {
+                pc += off;
+            }
+        }
+        JMP_K_JSLE => {
+            if reg[dst] as i64 <= imm as i64 {
+                pc += off;
+            }
+        }
+        JMP_X_JSLE => {
+            if reg[dst] as i64 <= reg[src] as i64 {
+                pc += off;
+            }
+        }
 
         LD_IMM_B => {}
         LD_IMM_H => {}
