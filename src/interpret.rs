@@ -1,9 +1,16 @@
 use crate::types::*;
 
+const STACK_SIZE: usize = 128;
+
 pub fn interpret(insts: &[u64]) -> u64 {
     let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
-    let mem: [u8; 256 * 1024] = [0; 256 * 1024];
+    let stack: [u8; STACK_SIZE] = [0; STACK_SIZE];
+    // reg[1] = (uintptr_t)mem;
+    // reg[2] = (uint64_t)mem_len;
+    unsafe {
+        reg[10] = stack.as_ptr().add(STACK_SIZE) as u64;
+    }
     loop {
         let inst = insts[pc as usize];
         pc += 1;
@@ -367,20 +374,16 @@ pub fn interpret(insts: &[u64]) -> u64 {
             LDX_IND_DW => {}
             */
             LDX_MEM_B => unsafe {
-                reg[dst] =
-                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u8) as u64;
+                reg[dst] = *((reg[src] as *mut u8).offset(off as isize) as *mut u8) as u64;
             },
             LDX_MEM_H => unsafe {
-                reg[dst] =
-                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u16) as u64;
+                reg[dst] = *((reg[src] as *mut u8).offset(off as isize) as *mut u16) as u64;
             },
             LDX_MEM_W => unsafe {
-                reg[dst] =
-                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u32) as u64;
+                reg[dst] = *((reg[src] as *mut u8).offset(off as isize) as *mut u32) as u64;
             },
             LDX_MEM_DW => unsafe {
-                reg[dst] =
-                    *(mem.as_ptr().add(reg[src] as usize).offset(off as isize) as *mut u64) as u64;
+                reg[dst] = *((reg[src] as *mut u8).offset(off as isize) as *mut u64) as u64;
             },
             /*
             LDX_XADD_B => {}
@@ -423,20 +426,16 @@ pub fn interpret(insts: &[u64]) -> u64 {
             STX_IND_DW => {}
             */
             STX_MEM_B => unsafe {
-                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u8) =
-                    reg[src] as u8;
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u8) = reg[src] as u8;
             },
             STX_MEM_H => unsafe {
-                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u16) =
-                    reg[src] as u16;
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u16) = reg[src] as u16;
             },
             STX_MEM_W => unsafe {
-                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u32) =
-                    reg[src] as u32;
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u32) = reg[src] as u32;
             },
             STX_MEM_DW => unsafe {
-                *(mem.as_ptr().add(reg[dst] as usize).offset(off as isize) as *mut u64) =
-                    reg[src] as u64;
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u64) = reg[src] as u64;
             },
             /*
             STX_XADD_B => {}
