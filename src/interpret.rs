@@ -42,13 +42,18 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 reg[dst] *= reg[src];
                 reg[dst] &= u32::MAX as u64;
             }
-            // TODO: check div by zero
             ALU_K_DIV => {
-                reg[dst] /= imm;
+                reg[dst] = match reg[dst].checked_div(imm) {
+                    Some(res) => res,
+                    None => return 0,
+                };
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_X_DIV => {
-                reg[dst] /= reg[src];
+                reg[dst] = match reg[dst].checked_div(reg[src]) {
+                    Some(res) => res,
+                    None => return 0,
+                };
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_K_OR => {
@@ -87,13 +92,18 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 reg[dst] = (-(reg[dst] as i64)) as u64;
                 reg[dst] &= u32::MAX as u64;
             }
-            // TODO: check div by zero
             ALU_K_MOD => {
-                reg[dst] = (reg[dst] as u32 % imm as u32) as u64;
+                reg[dst] = match (reg[dst] as u32).checked_rem(imm as u32) {
+                    Some(res) => res as u64,
+                    None => return 0,
+                };
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_X_MOD => {
-                reg[dst] = (reg[dst] as u32 % reg[src] as u32) as u64;
+                reg[dst] = match (reg[dst] as u32).checked_rem(reg[src] as u32) {
+                    Some(res) => res as u64,
+                    None => return 0,
+                };
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_K_XOR => {
@@ -120,18 +130,17 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 reg[dst] = (reg[dst] as i32 >> reg[src] as u32) as u64;
                 reg[dst] &= u32::MAX as u64;
             }
-            // TODO: check invalid param
             ALU_K_END => match imm {
                 16 => reg[dst] = (reg[dst] as u16).to_le() as u64,
                 32 => reg[dst] = (reg[dst] as u32).to_le() as u64,
                 64 => reg[dst] = (reg[dst] as u64).to_le() as u64,
-                _ => {}
+                _ => return 0,
             },
             ALU_X_END => match imm {
                 16 => reg[dst] = (reg[dst] as u16).to_be() as u64,
                 32 => reg[dst] = (reg[dst] as u32).to_be() as u64,
                 64 => reg[dst] = (reg[dst] as u64).to_be() as u64,
-                _ => {}
+                _ => return 0,
             },
 
             ALU64_K_ADD => {
@@ -152,12 +161,17 @@ pub fn interpret(insts: &[u64]) -> u64 {
             ALU64_X_MUL => {
                 reg[dst] *= reg[src];
             }
-            // TODO: check div by zero
             ALU64_K_DIV => {
-                reg[dst] /= imm;
+                reg[dst] = match reg[dst].checked_div(imm) {
+                    Some(res) => res,
+                    None => return 0,
+                };
             }
             ALU64_X_DIV => {
-                reg[dst] /= reg[src];
+                reg[dst] = match reg[dst].checked_div(reg[src]) {
+                    Some(res) => res,
+                    None => return 0,
+                };
             }
             ALU64_K_OR => {
                 reg[dst] |= imm;
@@ -186,12 +200,17 @@ pub fn interpret(insts: &[u64]) -> u64 {
             ALU64_K_NEG => {
                 reg[dst] = (-(reg[dst] as i64)) as u64;
             }
-            // TODO: check div by zero
             ALU64_K_MOD => {
-                reg[dst] %= imm;
+                reg[dst] = match reg[dst].checked_rem(imm) {
+                    Some(res) => res,
+                    None => return 0,
+                };
             }
             ALU64_X_MOD => {
-                reg[dst] %= reg[src];
+                reg[dst] = match reg[dst].checked_rem(reg[src]) {
+                    Some(res) => res,
+                    None => return 0,
+                };
             }
             ALU64_K_XOR => {
                 reg[dst] ^= imm;
