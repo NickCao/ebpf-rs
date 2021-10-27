@@ -128,32 +128,86 @@ pub fn interpret(inst: u64) {
             _ => {}
         },
 
-        ALU64_K_ADD => {}
-        ALU64_X_ADD => {}
-        ALU64_K_SUB => {}
-        ALU64_X_SUB => {}
-        ALU64_K_MUL => {}
-        ALU64_X_MUL => {}
-        ALU64_K_DIV => {}
-        ALU64_X_DIV => {}
-        ALU64_K_OR => {}
-        ALU64_X_OR => {}
-        ALU64_K_AND => {}
-        ALU64_X_AND => {}
-        ALU64_K_LSH => {}
-        ALU64_X_LSH => {}
-        ALU64_K_RSH => {}
-        ALU64_X_RSH => {}
-        ALU64_K_NEG => {}
-        ALU64_X_NEG => {}
-        ALU64_K_MOD => {}
-        ALU64_X_MOD => {}
-        ALU64_K_XOR => {}
-        ALU64_X_XOR => {}
-        ALU64_K_MOV => {}
-        ALU64_X_MOV => {}
-        ALU64_K_ARSH => {}
-        ALU64_X_ARSH => {}
+        ALU64_K_ADD => {
+            reg[dst] += imm;
+        }
+        ALU64_X_ADD => {
+            reg[dst] += reg[src];
+        }
+        ALU64_K_SUB => {
+            reg[dst] -= imm;
+        }
+        ALU64_X_SUB => {
+            reg[dst] -= reg[src];
+        }
+        ALU64_K_MUL => {
+            reg[dst] *= imm;
+        }
+        ALU64_X_MUL => {
+            reg[dst] *= reg[src];
+        }
+        // TODO: check div by zero
+        ALU64_K_DIV => {
+            reg[dst] /= imm;
+        }
+        ALU64_X_DIV => {
+            reg[dst] /= reg[src];
+        }
+        ALU64_K_OR => {
+            reg[dst] |= imm;
+        }
+        ALU64_X_OR => {
+            reg[dst] |= reg[src];
+        }
+        ALU64_K_AND => {
+            reg[dst] &= imm;
+        }
+        ALU64_X_AND => {
+            reg[dst] &= reg[src];
+        }
+        ALU64_K_LSH => {
+            reg[dst] <<= imm;
+        }
+        ALU64_X_LSH => {
+            reg[dst] <<= reg[src];
+        }
+        ALU64_K_RSH => {
+            reg[dst] >>= imm;
+        }
+        ALU64_X_RSH => {
+            reg[dst] >>= reg[src];
+        }
+        ALU64_K_NEG => {
+            reg[dst] = (-(reg[dst] as i64)) as u64;
+        }
+        ALU64_X_NEG => {
+            reg[dst] = (-(reg[dst] as i64)) as u64;
+        }
+        // TODO: check div by zero
+        ALU64_K_MOD => {
+            reg[dst] %= imm;
+        }
+        ALU64_X_MOD => {
+            reg[dst] %= reg[src];
+        }
+        ALU64_K_XOR => {
+            reg[dst] ^= imm;
+        }
+        ALU64_X_XOR => {
+            reg[dst] ^= reg[src];
+        }
+        ALU64_K_MOV => {
+            reg[dst] = imm;
+        }
+        ALU64_X_MOV => {
+            reg[dst] = reg[src];
+        }
+        ALU64_K_ARSH => {
+            reg[dst] = (reg[dst] as i64 >> imm) as u64;
+        }
+        ALU64_X_ARSH => {
+            reg[dst] = (reg[dst] as i64 >> reg[src]) as u64;
+        }
         ALU64_K_END => {}
         ALU64_X_END => {}
 
