@@ -1,6 +1,6 @@
 use crate::types::*;
 
-const STACK_SIZE: usize = 128;
+const STACK_SIZE: usize = 512;
 
 pub fn interpret(insts: &[u64]) -> u64 {
     let mut pc: u16 = 0;
