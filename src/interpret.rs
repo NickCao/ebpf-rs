@@ -403,10 +403,20 @@ pub fn interpret(insts: &[u64]) -> u64 {
             ST_IND_H => {}
             ST_IND_W => {}
             ST_IND_DW => {}
-            ST_MEM_B => {}
-            ST_MEM_H => {}
-            ST_MEM_W => {}
-            ST_MEM_DW => {}
+            */
+            ST_MEM_B => unsafe {
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u8) = imm as u8;
+            },
+            ST_MEM_H => unsafe {
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u16) = imm as u16;
+            },
+            ST_MEM_W => unsafe {
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u32) = imm as u32;
+            },
+            ST_MEM_DW => unsafe {
+                *((reg[dst] as *mut u8).offset(off as isize) as *mut u64) = imm as u64;
+            },
+            /*
             ST_XADD_B => {}
             ST_XADD_H => {}
             ST_XADD_W => {}
