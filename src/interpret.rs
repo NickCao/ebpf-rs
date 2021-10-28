@@ -4,21 +4,10 @@ const STACK_SIZE: usize = 512;
 
 pub type Helper = unsafe fn(u64, u64, u64, u64, u64) -> u64;
 
-unsafe fn bpf_trace_printk(fmt: u64, fmt_size: u64, p1: u64, p2: u64, p3: u64) -> u64 {
-    let fmt = core::slice::from_raw_parts(fmt as *const u8, fmt_size as u32 as usize);
-    panic!(
-        "{:?}",
-        dyn_fmt::Arguments::new(core::str::from_utf8_unchecked(fmt), &[p1, p2, p3])
-    );
-    0
-}
-
-pub fn interpret(insts: &[u64]) -> u64 {
+pub fn interpret(insts: &[u64], helpers: &[Helper]) -> u64 {
     let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
     let stack: [u8; STACK_SIZE] = [0; STACK_SIZE];
-    let mut helpers: [Helper; 16] = [|_, _, _, _, _| 0; 16];
-    helpers[6] = bpf_trace_printk;
     unsafe {
         reg[10] = stack.as_ptr().add(STACK_SIZE) as u64;
     }
@@ -324,10 +313,22 @@ pub fn interpret(insts: &[u64]) -> u64 {
 
 #[cfg(test)]
 mod test {
-    use crate::interpret::interpret;
+    use crate::interpret::{interpret, Helper};
+
+    unsafe fn bpf_trace_printk(fmt: u64, fmt_size: u64, p1: u64, p2: u64, p3: u64) -> u64 {
+        let fmt = core::slice::from_raw_parts(fmt as *const u8, fmt_size as u32 as usize);
+        print!(
+            "{}",
+            dyn_fmt::Arguments::new(core::str::from_utf8_unchecked(fmt), &[p1, p2, p3])
+        );
+        0
+    }
+
     #[test]
     fn gauss() {
         let prog = include_bytes!("tests/gauss.bin");
+        let mut helpers: [Helper; 16] = [|_, _, _, _, _| 0; 16];
+        helpers[6] = bpf_trace_printk;
         let ret = interpret(
             &prog
                 .chunks_exact(8)
@@ -339,6 +340,7 @@ mod test {
                     })
                 })
                 .collect::<Vec<u64>>(),
+            &helpers,
         );
         assert_eq!(ret, 5050);
     }
