@@ -4,10 +4,11 @@ const STACK_SIZE: usize = 512;
 
 pub type Helper = unsafe fn(u64, u64, u64, u64, u64) -> u64;
 
-pub fn interpret(insts: &[u64], helpers: &[Helper]) -> u64 {
+pub fn interpret(insts: &[u64], helpers: &[Helper], ctx: u64) -> u64 {
     let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
     let stack: [u8; STACK_SIZE] = [0; STACK_SIZE];
+    reg[1] = ctx;
     unsafe {
         reg[10] = stack.as_ptr().add(STACK_SIZE) as u64;
     }
@@ -341,6 +342,7 @@ mod test {
                 })
                 .collect::<Vec<u64>>(),
             &helpers,
+            0,
         );
         assert_eq!(ret, 5050);
     }
