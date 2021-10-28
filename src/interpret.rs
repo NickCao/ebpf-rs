@@ -26,7 +26,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
         let inst = insts[pc as usize];
         pc += 1;
         let imm: i32 = ((inst >> 32) & u32::MAX as u64) as i32;
-        let off: u16 = ((inst >> 16) & u16::MAX as u64) as u16;
+        let off: i16 = ((inst >> 16) & u16::MAX as u64) as i16;
         let src: usize = ((inst >> 12) & 0x0f) as usize;
         let dst: usize = ((inst >> 8) & 0x0f) as usize;
         let op: u8 = (inst & u8::MAX as u64) as u8;
@@ -144,75 +144,77 @@ pub fn interpret(insts: &[u64]) -> u64 {
             ALU64_K_ARSH => reg[dst] = (reg[dst] as i64 >> imm as u64) as u64,
             ALU64_X_ARSH => reg[dst] = (reg[dst] as i64 >> reg[src]) as u64,
 
-            JMP_K_JA => pc = pc.wrapping_add(off),
+            JMP_K_JA => {
+                pc = (pc as i16 + off) as u16;
+            }
             JMP_K_JEQ => {
                 if reg[dst] == imm as u64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JEQ => {
                 if reg[dst] == reg[src] {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JGT => {
                 if reg[dst] > imm as u64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JGT => {
                 if reg[dst] > reg[src] {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JGE => {
                 if reg[dst] >= imm as u64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JGE => {
                 if reg[dst] >= reg[src] {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JSET => {
                 if reg[dst] & imm as u64 != 0 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JSET => {
                 if reg[dst] & reg[src] != 0 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JNE => {
                 if reg[dst] != imm as u64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JNE => {
                 if reg[dst] != reg[src] {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JSGT => {
                 if reg[dst] as i64 > imm as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JSGT => {
                 if reg[dst] as i64 > reg[src] as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JSGE => {
                 if reg[dst] as i64 >= imm as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JSGE => {
                 if reg[dst] as i64 >= reg[src] as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_CALL => unsafe {
@@ -223,42 +225,42 @@ pub fn interpret(insts: &[u64]) -> u64 {
             }
             JMP_K_JLT => {
                 if reg[dst] < imm as u64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JLT => {
                 if reg[dst] < reg[src] {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JLE => {
                 if reg[dst] <= imm as u64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JLE => {
                 if reg[dst] <= reg[src] {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JSLT => {
                 if (reg[dst] as i64) < imm as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JSLT => {
                 if (reg[dst] as i64) < reg[src] as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_K_JSLE => {
                 if reg[dst] as i64 <= imm as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             JMP_X_JSLE => {
                 if reg[dst] as i64 <= reg[src] as i64 {
-                    pc = pc.wrapping_add(off);
+                    pc = (pc as i16 + off) as u16;
                 }
             }
             LD_IMM_DW => {
