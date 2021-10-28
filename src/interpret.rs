@@ -2,94 +2,63 @@ use crate::types::*;
 
 const STACK_SIZE: usize = 512;
 
+pub type Helper = unsafe fn(u64, u64, u64, u64, u64) -> u64;
+
+unsafe fn bpf_trace_printk(fmt: u64, fmt_size: u64, p1: u64, p2: u64, p3: u64) -> u64 {
+    let fmt = core::slice::from_raw_parts(fmt as *const u8, fmt_size as u32 as usize);
+    panic!(
+        "{:?}",
+        dyn_fmt::Arguments::new(core::str::from_utf8_unchecked(fmt), &[p1, p2, p3])
+    );
+    0
+}
+
 pub fn interpret(insts: &[u64]) -> u64 {
     let mut pc: u16 = 0;
     let mut reg: [u64; 16] = [0; 16];
     let stack: [u8; STACK_SIZE] = [0; STACK_SIZE];
+    let mut helpers: [Helper; 16] = [|_, _, _, _, _| 0; 16];
+    helpers[6] = bpf_trace_printk;
     unsafe {
         reg[10] = stack.as_ptr().add(STACK_SIZE) as u64;
     }
     loop {
         let inst = insts[pc as usize];
         pc += 1;
-        let imm: u64 = ((inst >> 32) & u32::MAX as u64) as u64;
+        let imm: i32 = ((inst >> 32) & u32::MAX as u64) as i32;
         let off: u16 = ((inst >> 16) & u16::MAX as u64) as u16;
         let src: usize = ((inst >> 12) & 0x0f) as usize;
         let dst: usize = ((inst >> 8) & 0x0f) as usize;
         let op: u8 = (inst & u8::MAX as u64) as u8;
         match op {
-            ALU_K_ADD => {
-                reg[dst] += imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_ADD => {
-                reg[dst] += reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_K_SUB => {
-                reg[dst] -= imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_SUB => {
-                reg[dst] -= reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_K_MUL => {
-                reg[dst] *= imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_MUL => {
-                reg[dst] *= reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
+            ALU_K_ADD => reg[dst] = (reg[dst] as i32).wrapping_add(imm) as u64,
+            ALU_X_ADD => reg[dst] = (reg[dst] as i32).wrapping_add(reg[src] as i32) as u64,
+            ALU_K_SUB => reg[dst] = (reg[dst] as i32).wrapping_sub(imm) as u64,
+            ALU_X_SUB => reg[dst] = (reg[dst] as i32).wrapping_sub(reg[src] as i32) as u64,
+            ALU_K_MUL => reg[dst] = (reg[dst] as i32).wrapping_mul(imm) as u64,
+            ALU_X_MUL => reg[dst] = (reg[dst] as i32).wrapping_mul(reg[src] as i32) as u64,
             ALU_K_DIV => {
-                reg[dst] = match reg[dst].checked_div(imm) {
-                    Some(res) => res,
+                reg[dst] = match (reg[dst] as u32).checked_div(imm as u32) {
+                    Some(res) => res as u64,
                     None => return 0,
                 };
-                reg[dst] &= u32::MAX as u64;
             }
             ALU_X_DIV => {
-                reg[dst] = match reg[dst].checked_div(reg[src]) {
-                    Some(res) => res,
+                reg[dst] = match (reg[dst] as u32).checked_div(reg[src] as u32) {
+                    Some(res) => res as u64,
                     None => return 0,
                 };
-                reg[dst] &= u32::MAX as u64;
             }
-            ALU_K_OR => {
-                reg[dst] |= imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_OR => {
-                reg[dst] |= reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_K_AND => {
-                reg[dst] &= imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_AND => {
-                reg[dst] &= reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_K_LSH => {
-                reg[dst] <<= imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_LSH => {
-                reg[dst] <<= reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_K_RSH => {
-                reg[dst] = (reg[dst] & u32::MAX as u64) >> imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_RSH => {
-                reg[dst] = (reg[dst] & u32::MAX as u64) >> reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
+            ALU_K_OR => reg[dst] = (reg[dst] as u32 | imm as u32) as u64,
+            ALU_X_OR => reg[dst] = (reg[dst] as u32 | reg[src] as u32) as u64,
+            ALU_K_AND => reg[dst] = (reg[dst] as u32 & imm as u32) as u64,
+            ALU_X_AND => reg[dst] = (reg[dst] as u32 & reg[src] as u32) as u64,
+            ALU_K_LSH => reg[dst] = (reg[dst] as u32).wrapping_shl(imm as u32) as u64,
+            ALU_X_LSH => reg[dst] = (reg[dst] as u32).wrapping_shl(reg[src] as u32) as u64,
+            ALU_K_RSH => reg[dst] = (reg[dst] as u32).wrapping_shr(imm as u32) as u64,
+            ALU_X_RSH => reg[dst] = (reg[dst] as u32).wrapping_shr(reg[src] as u32) as u64,
             ALU_K_NEG => {
-                reg[dst] = (-(reg[dst] as i64)) as u64;
+                reg[dst] = (reg[dst] as i32).wrapping_neg() as u64;
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_K_MOD => {
@@ -97,37 +66,23 @@ pub fn interpret(insts: &[u64]) -> u64 {
                     Some(res) => res as u64,
                     None => return 0,
                 };
-                reg[dst] &= u32::MAX as u64;
             }
             ALU_X_MOD => {
                 reg[dst] = match (reg[dst] as u32).checked_rem(reg[src] as u32) {
                     Some(res) => res as u64,
                     None => return 0,
                 };
-                reg[dst] &= u32::MAX as u64;
             }
-            ALU_K_XOR => {
-                reg[dst] ^= imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_XOR => {
-                reg[dst] ^= reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_K_MOV => {
-                reg[dst] = imm;
-                reg[dst] &= u32::MAX as u64;
-            }
-            ALU_X_MOV => {
-                reg[dst] = reg[src];
-                reg[dst] &= u32::MAX as u64;
-            }
+            ALU_K_XOR => reg[dst] = (reg[dst] as u32 ^ imm as u32) as u64,
+            ALU_X_XOR => reg[dst] = (reg[dst] as u32 ^ reg[src] as u32) as u64,
+            ALU_K_MOV => reg[dst] = imm as u32 as u64,
+            ALU_X_MOV => reg[dst] = reg[src] as u32 as u64,
             ALU_K_ARSH => {
-                reg[dst] = (reg[dst] as i32 >> imm) as u64;
+                reg[dst] = (reg[dst] as i32).wrapping_shr(imm as u32) as u64;
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_X_ARSH => {
-                reg[dst] = (reg[dst] as i32 >> reg[src] as u32) as u64;
+                reg[dst] = (reg[dst] as i32).wrapping_shr(reg[src] as u32) as u64;
                 reg[dst] &= u32::MAX as u64;
             }
             ALU_K_END => match imm {
@@ -143,26 +98,14 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 _ => return 0,
             },
 
-            ALU64_K_ADD => {
-                reg[dst] += imm;
-            }
-            ALU64_X_ADD => {
-                reg[dst] += reg[src];
-            }
-            ALU64_K_SUB => {
-                reg[dst] -= imm;
-            }
-            ALU64_X_SUB => {
-                reg[dst] -= reg[src];
-            }
-            ALU64_K_MUL => {
-                reg[dst] *= imm;
-            }
-            ALU64_X_MUL => {
-                reg[dst] *= reg[src];
-            }
+            ALU64_K_ADD => reg[dst] = reg[dst].wrapping_add(imm as u64),
+            ALU64_X_ADD => reg[dst] = reg[dst].wrapping_add(reg[src]),
+            ALU64_K_SUB => reg[dst] = reg[dst].wrapping_sub(imm as u64),
+            ALU64_X_SUB => reg[dst] = reg[dst].wrapping_sub(reg[src]),
+            ALU64_K_MUL => reg[dst] = reg[dst].wrapping_mul(imm as u64),
+            ALU64_X_MUL => reg[dst] = reg[dst].wrapping_mul(reg[src]),
             ALU64_K_DIV => {
-                reg[dst] = match reg[dst].checked_div(imm) {
+                reg[dst] = match reg[dst].checked_div(imm as u64) {
                     Some(res) => res,
                     None => return 0,
                 };
@@ -173,35 +116,17 @@ pub fn interpret(insts: &[u64]) -> u64 {
                     None => return 0,
                 };
             }
-            ALU64_K_OR => {
-                reg[dst] |= imm;
-            }
-            ALU64_X_OR => {
-                reg[dst] |= reg[src];
-            }
-            ALU64_K_AND => {
-                reg[dst] &= imm;
-            }
-            ALU64_X_AND => {
-                reg[dst] &= reg[src];
-            }
-            ALU64_K_LSH => {
-                reg[dst] <<= imm;
-            }
-            ALU64_X_LSH => {
-                reg[dst] <<= reg[src];
-            }
-            ALU64_K_RSH => {
-                reg[dst] >>= imm;
-            }
-            ALU64_X_RSH => {
-                reg[dst] >>= reg[src];
-            }
-            ALU64_K_NEG => {
-                reg[dst] = (-(reg[dst] as i64)) as u64;
-            }
+            ALU64_K_OR => reg[dst] |= imm as u64,
+            ALU64_X_OR => reg[dst] |= reg[src],
+            ALU64_K_AND => reg[dst] &= imm as u64,
+            ALU64_X_AND => reg[dst] &= reg[src],
+            ALU64_K_LSH => reg[dst] <<= imm as u64,
+            ALU64_X_LSH => reg[dst] <<= reg[src],
+            ALU64_K_RSH => reg[dst] >>= imm as u64,
+            ALU64_X_RSH => reg[dst] >>= reg[src],
+            ALU64_K_NEG => reg[dst] = (-(reg[dst] as i64)) as u64,
             ALU64_K_MOD => {
-                reg[dst] = match reg[dst].checked_rem(imm) {
+                reg[dst] = match reg[dst].checked_rem(imm as u64) {
                     Some(res) => res,
                     None => return 0,
                 };
@@ -212,30 +137,16 @@ pub fn interpret(insts: &[u64]) -> u64 {
                     None => return 0,
                 };
             }
-            ALU64_K_XOR => {
-                reg[dst] ^= imm;
-            }
-            ALU64_X_XOR => {
-                reg[dst] ^= reg[src];
-            }
-            ALU64_K_MOV => {
-                reg[dst] = imm;
-            }
-            ALU64_X_MOV => {
-                reg[dst] = reg[src];
-            }
-            ALU64_K_ARSH => {
-                reg[dst] = (reg[dst] as i64 >> imm) as u64;
-            }
-            ALU64_X_ARSH => {
-                reg[dst] = (reg[dst] as i64 >> reg[src]) as u64;
-            }
+            ALU64_K_XOR => reg[dst] ^= imm as u64,
+            ALU64_X_XOR => reg[dst] ^= reg[src],
+            ALU64_K_MOV => reg[dst] = imm as u64,
+            ALU64_X_MOV => reg[dst] = reg[src],
+            ALU64_K_ARSH => reg[dst] = (reg[dst] as i64 >> imm as u64) as u64,
+            ALU64_X_ARSH => reg[dst] = (reg[dst] as i64 >> reg[src]) as u64,
 
-            JMP_K_JA => {
-                pc = pc.wrapping_add(off);
-            }
+            JMP_K_JA => pc = pc.wrapping_add(off),
             JMP_K_JEQ => {
-                if reg[dst] == imm {
+                if reg[dst] == imm as u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -245,7 +156,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 }
             }
             JMP_K_JGT => {
-                if reg[dst] > imm {
+                if reg[dst] > imm as u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -255,7 +166,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 }
             }
             JMP_K_JGE => {
-                if reg[dst] >= imm {
+                if reg[dst] >= imm as u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -265,7 +176,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 }
             }
             JMP_K_JSET => {
-                if reg[dst] & imm != 0 {
+                if reg[dst] & imm as u64 != 0 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -275,7 +186,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 }
             }
             JMP_K_JNE => {
-                if reg[dst] != imm {
+                if reg[dst] != imm as u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -304,18 +215,14 @@ pub fn interpret(insts: &[u64]) -> u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
-            JMP_K_CALL => {
-                // reg[0] = funcs[imm](reg[1], reg[2], reg[3], reg[4], reg[5]);
-                // if (inst.imm == vm->unwind_stack_extension_index && reg[0] == 0) {
-                //    ret = reg[0];
-                //    return;
-                // }
-            }
+            JMP_K_CALL => unsafe {
+                reg[0] = helpers[imm as usize](reg[1], reg[2], reg[3], reg[4], reg[5]);
+            },
             JMP_K_EXIT => {
                 return reg[0];
             }
             JMP_K_JLT => {
-                if reg[dst] < imm {
+                if reg[dst] < imm as u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -325,7 +232,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 }
             }
             JMP_K_JLE => {
-                if reg[dst] <= imm {
+                if reg[dst] <= imm as u64 {
                     pc = pc.wrapping_add(off);
                 }
             }
@@ -357,7 +264,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
             LD_IMM_DW => {
                 let next = insts[pc as usize];
                 pc += 1;
-                reg[dst] = imm + ((next >> 32) << 32);
+                reg[dst] = (imm as u64 & u32::MAX as u64) + ((next >> 32) << 32);
             }
             /*
             TODO: non generic inst
@@ -407,7 +314,7 @@ pub fn interpret(insts: &[u64]) -> u64 {
                 *((reg[dst] as *mut u8).offset(off as isize) as *mut u64) = reg[src] as u64;
             },
             _ => {
-                unimplemented!("{:x}", inst);
+                unimplemented!("op: {:x}, pc: {:x}", op, pc);
             }
         }
     }
