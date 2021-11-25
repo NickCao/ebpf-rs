@@ -9,3 +9,6 @@ pub mod btf {
 pub mod bpf {
     include!(concat!(env!("OUT_DIR"), "/bpf.rs"));
 }
+pub mod verifier {
+    include!(concat!(env!("OUT_DIR"), "/verifier.rs"));
+}

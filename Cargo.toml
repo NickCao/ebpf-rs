@@ -5,7 +5,9 @@ edition = "2018"
 
 [dependencies]
 cty = "0.2"
-dyn-fmt = { version = "0.3.0", default-features = false }
+dyn-fmt = { version = "0.3", default-features = false }
+cxx = "1.0"
 
 [build-dependencies]
 bindgen = "0.59"
+cxx-build = "1.0"

@@ -1,0 +1,34 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2c949a1..ffcd04c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -97,7 +97,7 @@ set_target_properties(run_yaml
+         PROPERTIES
+         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/..")
+ 
+-target_compile_options(ebpfverifier PRIVATE ${COMMON_FLAGS})
++target_compile_options(ebpfverifier PRIVATE ${COMMON_FLAGS} -ffreestanding)
+ target_compile_options(ebpfverifier PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
+ target_compile_options(ebpfverifier PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
+ target_compile_options(ebpfverifier PUBLIC "$<$<CONFIG:SANITIZE>:${SANITIZE_FLAGS}>")
+@@ -131,3 +131,20 @@ target_link_libraries(ebpfverifier PRIVATE ${YAML_CPP_LIBRARIES})
+ target_compile_options(ebpfverifier PRIVATE ${COMMON_FLAGS})
+ 
+ target_link_libraries(run_yaml PRIVATE ebpfverifier)
++
++install(TARGETS ebpfverifier DESTINATION lib)
++install(TARGETS check DESTINATION bin)
++file(GLOB HEADERS
++        "./src/*.h"
++        "./src/*.hpp"
++        "./src/crab/*.hpp"
++    )
++file(GLOB HEADERS_CRAB
++        "./src/crab/*.hpp"
++    )
++file(GLOB HEADERS_CRAB_UTILS
++        "./src/crab_utils/*.hpp"
++    )
++install(FILES ${HEADERS} DESTINATION include)
++install(FILES ${HEADERS_CRAB} DESTINATION include/crab)
++install(FILES ${HEADERS_CRAB_UTILS} DESTINATION include/crab_utils)
