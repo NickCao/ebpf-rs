@@ -1,4 +1,4 @@
-# clang
+# eBPF with clang
 
 ## build
 instead of manually crafting eBPF programs, we can use clang to compile a subset of c code into eBPF programs  
@@ -10,3 +10,9 @@ notice that `-O2` MUST NOT be omitted, otherwise clang would generate pseudo ins
 ## disassemble
 
     llvm-objdump --triple=bpf -S ebpf.o
+
+## c subset
+
+- all functions must be inlined
+- no global variables
+- no unbounded loops

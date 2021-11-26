@@ -1,4 +1,4 @@
-# instruction
+# eBPF instruction
 
 ## encoding
 64 bit fixed size instructions encoded in host byte order
