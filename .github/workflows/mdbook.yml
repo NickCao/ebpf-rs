@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: peaceiris/actions-mdbook@v1
-    - run: mdbook build ./docs -d ./docs/book
+    - run: mdbook build ./docs
     - uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
