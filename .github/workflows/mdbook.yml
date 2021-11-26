@@ -1,5 +1,5 @@
 name: mdbook
-true:
+on:
   push:
     branches:
     - master
