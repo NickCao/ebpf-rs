@@ -53,8 +53,8 @@ the `size` field specifies the size of memory to access
 the `mode` field specifies the addressing mode
 
     IMM   0x0  // immediate
-    ABS   0x1  // packet
-    IND   0x2  // packet
+    ABS   0x1  // packet absolute offset
+    IND   0x2  // packet indirect (register) offset
     MEM   0x3  // memory
     LEN   0x4  // reserved
     MSH   0x5  // reserved
@@ -105,3 +105,9 @@ for `class` in `JMP` or `JMP32`
     BPF_JSLE  0xd0
 
 `JMP32` and `ALU` instructions operate on the lower 32 bits of the registers, zeroing the upper half of destination register
+
+## double word load
+there exists one special instruction that takes 128 bits: `LD IMM DW`, it loads two 32 bit immediates from this and the next instruction into a single register, effectively loading a 64 bit immediate
+
+## implementation notes
+for eBPF runtimes, there's no need to implement the full eBPF instruction set, a subset of which is more than enough for kernel instrumentation. a great reference is the llvm unit tests for eBPF target: [llvm test eBPF](https://github.com/llvm/llvm-project/tree/main/llvm/test/MC/BPF)
