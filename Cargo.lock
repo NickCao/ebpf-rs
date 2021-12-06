@@ -73,6 +73,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "byteorder"
+version = "1.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
+
+[[package]]
 name = "cexpr"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -132,6 +138,7 @@ dependencies = [
  "bindgen",
  "cty",
  "dyn-fmt",
+ "riscy-isa",
 ]
 
 [[package]]
@@ -275,6 +282,15 @@ name = "regex-syntax"
 version = "0.6.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
+
+[[package]]
+name = "riscy-isa"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecef3ce0ad0c28b191adc079e41598b27881f0554e353944632ee1c358fc5f43"
+dependencies = [
+ "byteorder",
+]
 
 [[package]]
 name = "rustc-hash"

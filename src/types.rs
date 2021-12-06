@@ -1,4 +1,4 @@
-use crate::binding::bpf::*;
+use crate::consts::*;
 
 pub const ALU_K_ADD: u8 = (BPF_ALU | BPF_K | BPF_ADD) as u8;
 pub const ALU_X_ADD: u8 = (BPF_ALU | BPF_X | BPF_ADD) as u8;

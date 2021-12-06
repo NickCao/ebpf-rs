@@ -19,14 +19,12 @@
         in
         {
           devShell = pkgs.mkShell {
-            LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
             buildInputs = with pkgs; [
               (rust-bin.selectLatestNightlyWith (toolchain:
                 toolchain.default.override {
                   extensions = [ "rust-analyzer-preview" ];
+                  targets = [ "riscv64gc-unknown-linux-gnu" ];
                 }))
-              linuxHeaders
-              rust-bindgen
             ];
           };
         }
