@@ -1,6 +1,8 @@
 # intro to Kprobes
 Kprobes enables you to dynamically insert breakpoint into nearly any kernel routine and specifying a handler routine to be invoked when the breakpoint is hit. it does so by replacing the instruction to trap with `INT3` on x86 (or equivalent instructions on other platforms) and single step the replaced instruction in breakpointe handler after executing user specified handler routines.
 
+A fork of rCore with Kprobes implements can be found at [https://github.com/NickCao/rCore](https://github.com/NickCao/rCore)
+
 ## single step
 single stepping the replaced instruction is trickier than it seems. only if the instruction would not produce exceptions or results related to pc or privilege levels can we safely run it out of the original context. otherwise we must take into consideration of all possible side effects and remediate them.
 
