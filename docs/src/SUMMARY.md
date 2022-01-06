@@ -9,3 +9,7 @@
 
 # Kprobes
 - [intro](./Kprobes/intro.md)
+
+# Rust
+- [symbols](./Rust/symbols.md)
+- [async](./Rust/async.md)

@@ -1,0 +1,2 @@
+# probe async Rust functions
+Async functions in rust are not functions at all, but ast level constructs that get translated into a FSM that drives it self to completion when polled. Thus we cannot probe async functions as we probe normal functions. To solve the problem, we can either add nop normal functions to async functions, and probe on them instead, or we can probe on the poll function of the generated FSM, which results in less visibility but still some useful informations on the async function, especially those performance related.
