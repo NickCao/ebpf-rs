@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>machine - ebpf-rs</title>
+        <title>async - ebpf-rs</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../preface.html">preface</a></li><li class="chapter-item expanded affix "><li class="part-title">eBPF</li><li class="chapter-item expanded "><a href="../eBPF/machine.html" class="active"><strong aria-hidden="true">1.</strong> machine</a></li><li class="chapter-item expanded "><a href="../eBPF/instruction.html"><strong aria-hidden="true">2.</strong> instruction</a></li><li class="chapter-item expanded "><a href="../eBPF/function.html"><strong aria-hidden="true">3.</strong> function</a></li><li class="chapter-item expanded "><a href="../eBPF/clang.html"><strong aria-hidden="true">4.</strong> clang</a></li><li class="chapter-item expanded affix "><li class="part-title">Kprobes</li><li class="chapter-item expanded "><a href="../Kprobes/intro.html"><strong aria-hidden="true">5.</strong> intro</a></li><li class="chapter-item expanded affix "><li class="part-title">Rust</li><li class="chapter-item expanded "><a href="../Rust/symbols.html"><strong aria-hidden="true">6.</strong> symbols</a></li><li class="chapter-item expanded "><a href="../Rust/async.html"><strong aria-hidden="true">7.</strong> async</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../preface.html">preface</a></li><li class="chapter-item expanded affix "><li class="part-title">eBPF</li><li class="chapter-item expanded "><a href="../eBPF/machine.html"><strong aria-hidden="true">1.</strong> machine</a></li><li class="chapter-item expanded "><a href="../eBPF/instruction.html"><strong aria-hidden="true">2.</strong> instruction</a></li><li class="chapter-item expanded "><a href="../eBPF/function.html"><strong aria-hidden="true">3.</strong> function</a></li><li class="chapter-item expanded "><a href="../eBPF/clang.html"><strong aria-hidden="true">4.</strong> clang</a></li><li class="chapter-item expanded affix "><li class="part-title">Kprobes</li><li class="chapter-item expanded "><a href="../Kprobes/intro.html"><strong aria-hidden="true">5.</strong> intro</a></li><li class="chapter-item expanded affix "><li class="part-title">Rust</li><li class="chapter-item expanded "><a href="../Rust/symbols.html"><strong aria-hidden="true">6.</strong> symbols</a></li><li class="chapter-item expanded "><a href="../Rust/async.html" class="active"><strong aria-hidden="true">7.</strong> async</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -134,26 +134,15 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="ebpf-machine"><a class="header" href="#ebpf-machine">eBPF machine</a></h1>
-<p>the eBPF machine is a traditional RISC register machine with a total of 11 64-bit registers, a program counter and a 512 byte fixed size stack. </p>
-<h2 id="registers-allocation"><a class="header" href="#registers-allocation">registers allocation</a></h2>
-<p>10 general purpose read-write registers numbered from r0 to r9, and 1 read-only frame pointer numbered r10. The pc register is implicit and cannot be read.</p>
-<h2 id="calling-convention"><a class="header" href="#calling-convention">calling convention</a></h2>
-<ul>
-<li>r0: return value</li>
-<li>r1-r5: arguments (more than 5 arguments is not supported)</li>
-<li>r6-r9: callee saved</li>
-</ul>
+                        <h1 id="probe-async-rust-functions"><a class="header" href="#probe-async-rust-functions">probe async Rust functions</a></h1>
+<p>Async functions in rust are not functions at all, but ast level constructs that get translated into a FSM that drives it self to completion when polled. Thus we cannot probe async functions as we probe normal functions. To solve the problem, we can either add nop normal functions to async functions, and probe on them instead, or we can probe on the poll function of the generated FSM, which results in less visibility but still some useful informations on the async function, especially those performance related.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../preface.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../Rust/symbols.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
-                            </a>
-                            <a rel="next" href="../eBPF/instruction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
                     </nav>
@@ -161,11 +150,8 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../preface.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../Rust/symbols.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
-                    </a>
-                    <a rel="next" href="../eBPF/instruction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
 
